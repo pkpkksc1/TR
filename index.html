@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역 ver6</title>
+<title>AI 실시간 통역 ver7</title>
 
 <style>
 
@@ -27,31 +27,23 @@ margin-left:8px;
 }
 
 #subtitleBox{
-
 position:absolute;
 bottom:0;
 width:100%;
 height:70%;
-
 overflow-y:auto;
 padding:40px;
-
 text-align:center;
-
 }
 
 .subtitle{
-
 font-size:42px;
 color:#00FF9C;
 font-weight:bold;
-
 max-width:1100px;
-margin:25px auto;
-
+margin:20px auto;
 line-height:1.4;
 word-break:keep-all;
-
 }
 
 </style>
@@ -60,7 +52,7 @@ word-break:keep-all;
 <body>
 
 <div id="header">
-🎤 AI 실시간 통역 <span id="version">ver6</span>
+🎤 AI 실시간 통역 <span id="version">ver7</span>
 <span id="status">🟢 대기중 (F1 시작)</span>
 </div>
 
@@ -71,19 +63,11 @@ word-break:keep-all;
 let recognition
 let running=false
 let lastSentence=""
-
-const fillerWords = [
-"啊","嗯","哦","这个","那个","然后","所以","就是",
-"음","아","어","그러니까","그"
-]
+let translating=false
 
 function cleanText(text){
 
-for(let word of fillerWords){
-text = text.replaceAll(word,"")
-}
-
-return text.trim()
+return text.replace(/^(啊|嗯|哦|这个|那个|然后|所以|就是)+/g,"").trim()
 
 }
 
@@ -108,7 +92,7 @@ recognition.onresult=function(event){
 
 let sentence=event.results[event.results.length-1][0].transcript
 
-sentence = cleanText(sentence)
+sentence=cleanText(sentence)
 
 if(sentence.length<2) return
 
@@ -116,7 +100,11 @@ if(sentence===lastSentence) return
 
 lastSentence=sentence
 
+if(!translating){
+
 translate(sentence)
+
+}
 
 }
 
@@ -141,6 +129,8 @@ document.getElementById("status").innerText=" 🟢 대기중 (F1 시작)"
 
 async function translate(text){
 
+translating=true
+
 let url=`https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=ko&dt=t&q=${encodeURIComponent(text)}`
 
 let res=await fetch(url)
@@ -149,9 +139,9 @@ let data=await res.json()
 
 let translated=data[0][0][0]
 
-translated = cleanText(translated)
-
 addSubtitle(translated)
+
+translating=false
 
 }
 
