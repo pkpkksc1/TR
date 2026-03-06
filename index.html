@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역 ver1</title>
+<title>AI 실시간 통역 ver2</title>
 
 <style>
 
@@ -27,7 +27,6 @@ margin-left:10px;
 }
 
 #subtitleBox{
-
 position:absolute;
 bottom:0;
 width:100%;
@@ -35,7 +34,6 @@ height:70%;
 overflow-y:auto;
 padding:40px;
 text-align:center;
-
 }
 
 .block{
@@ -54,8 +52,7 @@ font-weight:bold;
 <body>
 
 <div id="header">
-🎤 AI 실시간 통역 
-<span id="version">ver1</span>
+🎤 AI 실시간 통역 <span id="version">ver1</span>
 <span id="status">🟢 대기중 (F1 시작)</span>
 </div>
 
@@ -65,7 +62,7 @@ font-weight:bold;
 
 let recognition
 let running=false
-let lastText=""
+let lastSentence=""
 
 function start(){
 
@@ -79,23 +76,20 @@ recognition=new (window.SpeechRecognition||window.webkitSpeechRecognition)()
 
 recognition.lang="zh-CN"
 recognition.continuous=true
-recognition.interimResults=true
-
-recognition.maxAlternatives = 1
+recognition.interimResults=false
+recognition.maxAlternatives=1
 
 recognition.start()
 
 recognition.onresult=function(event){
 
-let text=""
+let sentence=event.results[event.results.length-1][0].transcript
 
-for(let i=event.resultIndex;i<event.results.length;i++){
+if(sentence===lastSentence) return
 
-text+=event.results[i][0].transcript
+lastSentence=sentence
 
-}
-
-processText(text)
+translate(sentence)
 
 }
 
@@ -112,26 +106,13 @@ recognition.start()
 function stop(){
 
 running=false
-
-document.getElementById("status").innerText=" 🟢 대기중 (F1 시작)"
-
 recognition.stop()
 
-}
-
-function processText(text){
-
-if(text===lastText) return
-
-lastText=text
-
-translate(text)
+document.getElementById("status").innerText=" 🟢 대기중 (F1 시작)"
 
 }
 
 async function translate(text){
-
-if(text.trim().length<2) return
 
 let url=`https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=ko&dt=t&q=${encodeURIComponent(text)}`
 
