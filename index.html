@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역 자막</title>
+<title>AI 실시간 통역</title>
 
 <style>
 
@@ -22,36 +22,39 @@ font-size:18px;
 }
 
 #subtitleBox{
+
 position:absolute;
 bottom:0;
 width:100%;
 height:70%;
 overflow-y:auto;
 padding:40px;
+text-align:center;
+
 }
 
 .block{
-margin:30px 0;
-text-align:center;
-}
 
-.cn{
-font-size:36px;
-color:#6EC1FF;
+margin:30px 0;
+
 }
 
 .kr{
-font-size:40px;
+
+font-size:44px;
 color:#00FF9C;
 font-weight:bold;
+
 }
 
 </style>
+
 </head>
 
 <body>
 
 <div id="status">🟢 대기중 (F1 시작)</div>
+
 <div id="subtitleBox"></div>
 
 <script>
@@ -63,6 +66,7 @@ let buffer=""
 function start(){
 
 if(running) return
+
 running=true
 
 document.getElementById("status").innerText="🔴 통역 중 (F1 멈춤)"
@@ -72,7 +76,10 @@ recognition=new (window.SpeechRecognition||window.webkitSpeechRecognition)()
 recognition.lang="zh-CN"
 recognition.continuous=true
 recognition.interimResults=true
-recognition.maxAlternatives=1
+
+/* 성능 최적화 */
+
+recognition.maxAlternatives = 1
 
 recognition.start()
 
@@ -135,30 +142,26 @@ if(text.trim().length<2) return
 let url=`https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=ko&dt=t&q=${encodeURIComponent(text)}`
 
 let res=await fetch(url)
+
 let data=await res.json()
 
 let translated=data[0][0][0]
 
-addSubtitle(text,translated)
+addSubtitle(translated)
 
 }
 
-function addSubtitle(cn,kr){
+function addSubtitle(kr){
 
 let box=document.getElementById("subtitleBox")
 
 let block=document.createElement("div")
 block.className="block"
 
-let cnDiv=document.createElement("div")
-cnDiv.className="cn"
-cnDiv.innerText=cn
-
 let krDiv=document.createElement("div")
 krDiv.className="kr"
 krDiv.innerText=kr
 
-block.appendChild(cnDiv)
 block.appendChild(krDiv)
 
 box.appendChild(block)
