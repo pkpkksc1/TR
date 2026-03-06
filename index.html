@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역 ver9</title>
+<title>AI 실시간 통역 ver10</title>
 
 <style>
 
@@ -63,7 +63,7 @@ word-break:keep-all;
 <body>
 
 <div id="header">
-🎤 AI 실시간 통역 <span id="version">ver9</span>
+🎤 AI 실시간 통역 <span id="version">ver10</span>
 <span id="status">🟢 대기중 (F1 시작)</span>
 </div>
 
@@ -73,14 +73,19 @@ word-break:keep-all;
 
 let recognition
 let running=false
-let lastSentence=""
 let translating=false
+let lastSentence=""
+let queue=[]
+
+/* 감탄사 제거 */
 
 function cleanText(text){
 
-return text.replace(/^(啊|嗯|哦|这个|那个|然后|所以|就是)+/g,"").trim()
+return text.replace(/^(啊|嗯|哦|这个|那个|然后|所以|就是|음|아|어)+/g,"").trim()
 
 }
+
+/* 긴 문장 분리 */
 
 function splitSentence(text){
 
@@ -123,11 +128,9 @@ if(sentence===lastSentence) return
 
 lastSentence=sentence
 
-if(!translating){
+queue.push(sentence)
 
-translate(sentence)
-
-}
+processQueue()
 
 }
 
@@ -150,9 +153,17 @@ document.getElementById("status").innerText=" 🟢 대기중 (F1 시작)"
 
 }
 
-async function translate(text){
+/* 번역 큐 처리 */
+
+async function processQueue(){
+
+if(translating) return
+
+if(queue.length===0) return
 
 translating=true
+
+let text=queue.shift()
 
 let url=`https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=ko&dt=t&q=${encodeURIComponent(text)}`
 
@@ -168,7 +179,11 @@ addSubtitle(translated)
 
 translating=false
 
+processQueue()
+
 }
+
+/* 자막 추가 */
 
 function addSubtitle(text){
 
