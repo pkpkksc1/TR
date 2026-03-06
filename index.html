@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역 ver4</title>
+<title>AI 실시간 통역 ver5</title>
 
 <style>
 
@@ -33,11 +33,6 @@ bottom:10%;
 width:100%;
 text-align:center;
 
-display:flex;
-flex-direction:column;
-align-items:center;
-gap:25px;
-
 }
 
 .subtitle{
@@ -47,38 +42,37 @@ color:#00FF9C;
 font-weight:bold;
 
 max-width:1100px;
+margin:auto;
 
 line-height:1.4;
-
 word-break:keep-all;
 
-opacity:0;
-transform:translateY(20px);
-
-animation:fadeUp 0.4s forwards;
-
 }
 
-@keyframes fadeUp{
+.old{
 
-to{
-opacity:1;
-transform:translateY(0);
-}
+opacity:0.4;
+font-size:34px;
 
 }
 
 </style>
+
 </head>
 
 <body>
 
 <div id="header">
-🎤 AI 실시간 통역 <span id="version">ver4</span>
+🎤 AI 실시간 통역 <span id="version">ver5</span>
 <span id="status">🟢 대기중 (F1 시작)</span>
 </div>
 
-<div id="subtitleBox"></div>
+<div id="subtitleBox">
+
+<div id="oldSubtitle" class="subtitle old"></div>
+<div id="currentSubtitle" class="subtitle"></div>
+
+</div>
 
 <script>
 
@@ -144,25 +138,17 @@ let data=await res.json()
 
 let translated=data[0][0][0]
 
-addSubtitle(translated)
+updateSubtitle(translated)
 
 }
 
-function addSubtitle(kr){
+function updateSubtitle(text){
 
-let box=document.getElementById("subtitleBox")
+let current=document.getElementById("currentSubtitle")
+let old=document.getElementById("oldSubtitle")
 
-let div=document.createElement("div")
-div.className="subtitle"
-div.innerText=kr
-
-box.appendChild(div)
-
-while(box.children.length>3){
-
-box.removeChild(box.firstChild)
-
-}
+old.innerText=current.innerText
+current.innerText=text
 
 }
 
