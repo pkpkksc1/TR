@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역 ver5</title>
+<title>AI 실시간 통역 ver6</title>
 
 <style>
 
@@ -29,8 +29,13 @@ margin-left:8px;
 #subtitleBox{
 
 position:absolute;
-bottom:10%;
+bottom:0;
 width:100%;
+height:70%;
+
+overflow-y:auto;
+padding:40px;
+
 text-align:center;
 
 }
@@ -42,43 +47,45 @@ color:#00FF9C;
 font-weight:bold;
 
 max-width:1100px;
-margin:auto;
+margin:25px auto;
 
 line-height:1.4;
 word-break:keep-all;
 
 }
 
-.old{
-
-opacity:0.4;
-font-size:34px;
-
-}
-
 </style>
-
 </head>
 
 <body>
 
 <div id="header">
-🎤 AI 실시간 통역 <span id="version">ver5</span>
+🎤 AI 실시간 통역 <span id="version">ver6</span>
 <span id="status">🟢 대기중 (F1 시작)</span>
 </div>
 
-<div id="subtitleBox">
-
-<div id="oldSubtitle" class="subtitle old"></div>
-<div id="currentSubtitle" class="subtitle"></div>
-
-</div>
+<div id="subtitleBox"></div>
 
 <script>
 
 let recognition
 let running=false
 let lastSentence=""
+
+const fillerWords = [
+"啊","嗯","哦","这个","那个","然后","所以","就是",
+"음","아","어","그러니까","그"
+]
+
+function cleanText(text){
+
+for(let word of fillerWords){
+text = text.replaceAll(word,"")
+}
+
+return text.trim()
+
+}
 
 function start(){
 
@@ -100,6 +107,10 @@ recognition.start()
 recognition.onresult=function(event){
 
 let sentence=event.results[event.results.length-1][0].transcript
+
+sentence = cleanText(sentence)
+
+if(sentence.length<2) return
 
 if(sentence===lastSentence) return
 
@@ -138,17 +149,23 @@ let data=await res.json()
 
 let translated=data[0][0][0]
 
-updateSubtitle(translated)
+translated = cleanText(translated)
+
+addSubtitle(translated)
 
 }
 
-function updateSubtitle(text){
+function addSubtitle(text){
 
-let current=document.getElementById("currentSubtitle")
-let old=document.getElementById("oldSubtitle")
+let box=document.getElementById("subtitleBox")
 
-old.innerText=current.innerText
-current.innerText=text
+let div=document.createElement("div")
+div.className="subtitle"
+div.innerText=text
+
+box.appendChild(div)
+
+box.scrollTop=box.scrollHeight
 
 }
 
