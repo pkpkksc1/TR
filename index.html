@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역 ver7</title>
+<title>AI 실시간 통역 ver9</title>
 
 <style>
 
@@ -27,32 +27,43 @@ margin-left:8px;
 }
 
 #subtitleBox{
+
 position:absolute;
 bottom:0;
 width:100%;
 height:70%;
+
 overflow-y:auto;
+
 padding:40px;
+
 text-align:center;
+
 }
 
 .subtitle{
+
 font-size:42px;
 color:#00FF9C;
 font-weight:bold;
+
 max-width:1100px;
 margin:20px auto;
+
 line-height:1.4;
+
 word-break:keep-all;
+
 }
 
 </style>
+
 </head>
 
 <body>
 
 <div id="header">
-🎤 AI 실시간 통역 <span id="version">ver7</span>
+🎤 AI 실시간 통역 <span id="version">ver9</span>
 <span id="status">🟢 대기중 (F1 시작)</span>
 </div>
 
@@ -68,6 +79,18 @@ let translating=false
 function cleanText(text){
 
 return text.replace(/^(啊|嗯|哦|这个|那个|然后|所以|就是)+/g,"").trim()
+
+}
+
+function splitSentence(text){
+
+if(text.length>40){
+
+text=text.replace(/(그리고|하지만|그래서|또|또한)/g,"\n$1")
+
+}
+
+return text
 
 }
 
@@ -138,6 +161,8 @@ let res=await fetch(url)
 let data=await res.json()
 
 let translated=data[0][0][0]
+
+translated=splitSentence(translated)
 
 addSubtitle(translated)
 
