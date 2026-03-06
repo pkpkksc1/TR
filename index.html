@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역 ver3</title>
+<title>AI 실시간 통역 ver4</title>
 
 <style>
 
@@ -29,43 +29,52 @@ margin-left:8px;
 #subtitleBox{
 
 position:absolute;
-bottom:0;
+bottom:10%;
 width:100%;
-height:70%;
-overflow-y:auto;
-padding:40px;
 text-align:center;
 
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:25px;
+
 }
 
-.block{
-margin:30px 0;
-}
-
-.kr{
+.subtitle{
 
 font-size:42px;
 color:#00FF9C;
 font-weight:bold;
 
 max-width:1100px;
-margin:auto;
 
 line-height:1.4;
 
 word-break:keep-all;
-white-space:normal;
+
+opacity:0;
+transform:translateY(20px);
+
+animation:fadeUp 0.4s forwards;
+
+}
+
+@keyframes fadeUp{
+
+to{
+opacity:1;
+transform:translateY(0);
+}
 
 }
 
 </style>
-
 </head>
 
 <body>
 
 <div id="header">
-🎤 AI 실시간 통역 <span id="version">ver3</span>
+🎤 AI 실시간 통역 <span id="version">ver4</span>
 <span id="status">🟢 대기중 (F1 시작)</span>
 </div>
 
@@ -143,18 +152,17 @@ function addSubtitle(kr){
 
 let box=document.getElementById("subtitleBox")
 
-let block=document.createElement("div")
-block.className="block"
+let div=document.createElement("div")
+div.className="subtitle"
+div.innerText=kr
 
-let krDiv=document.createElement("div")
-krDiv.className="kr"
-krDiv.innerText=kr
+box.appendChild(div)
 
-block.appendChild(krDiv)
+while(box.children.length>3){
 
-box.appendChild(block)
+box.removeChild(box.firstChild)
 
-box.scrollTop=box.scrollHeight
+}
 
 }
 
