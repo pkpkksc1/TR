@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역</title>
+<title>AI 실시간 통역 ver1</title>
 
 <style>
 
@@ -14,11 +14,16 @@ margin:0;
 overflow:hidden;
 }
 
-#status{
+#header{
 position:fixed;
 top:20px;
 left:20px;
 font-size:18px;
+}
+
+#version{
+color:#00FF9C;
+margin-left:10px;
 }
 
 #subtitleBox{
@@ -34,26 +39,25 @@ text-align:center;
 }
 
 .block{
-
-margin:30px 0;
-
+margin:25px 0;
 }
 
 .kr{
-
 font-size:44px;
 color:#00FF9C;
 font-weight:bold;
-
 }
 
 </style>
-
 </head>
 
 <body>
 
-<div id="status">🟢 대기중 (F1 시작)</div>
+<div id="header">
+🎤 AI 실시간 통역 
+<span id="version">ver1</span>
+<span id="status">🟢 대기중 (F1 시작)</span>
+</div>
 
 <div id="subtitleBox"></div>
 
@@ -61,7 +65,7 @@ font-weight:bold;
 
 let recognition
 let running=false
-let buffer=""
+let lastText=""
 
 function start(){
 
@@ -69,15 +73,13 @@ if(running) return
 
 running=true
 
-document.getElementById("status").innerText="🔴 통역 중 (F1 멈춤)"
+document.getElementById("status").innerText=" 🔴 통역중 (F1 멈춤)"
 
 recognition=new (window.SpeechRecognition||window.webkitSpeechRecognition)()
 
 recognition.lang="zh-CN"
 recognition.continuous=true
 recognition.interimResults=true
-
-/* 성능 최적화 */
 
 recognition.maxAlternatives = 1
 
@@ -111,7 +113,7 @@ function stop(){
 
 running=false
 
-document.getElementById("status").innerText="🟢 대기중 (F1 시작)"
+document.getElementById("status").innerText=" 🟢 대기중 (F1 시작)"
 
 recognition.stop()
 
@@ -119,19 +121,11 @@ recognition.stop()
 
 function processText(text){
 
-buffer=text
+if(text===lastText) return
 
-let sentences=buffer.split(/[，。！？,.]/)
+lastText=text
 
-if(sentences.length>1){
-
-let sentence=sentences.shift()
-
-buffer=sentences.join("")
-
-translate(sentence)
-
-}
+translate(text)
 
 }
 
