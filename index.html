@@ -2,354 +2,300 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역 ver11.3</title>
+<title>AI 실시간 통역 ver11.4</title>
 
 <style>
-
 body{
-background:#000;
-color:white;
-font-family:Arial, sans-serif;
-margin:0;
-overflow:hidden;
+  background:#000;
+  color:white;
+  font-family:Arial, sans-serif;
+  margin:0;
+  overflow:hidden;
 }
 
 #header{
-position:fixed;
-top:20px;
-left:20px;
-font-size:18px;
-z-index:10;
+  position:fixed;
+  top:20px;
+  left:20px;
+  font-size:18px;
+  z-index:10;
 }
 
 #version{
-color:#00FF9C;
-margin-left:8px;
+  color:#00FF9C;
+  margin-left:8px;
 }
 
 #status{
-margin-left:10px;
+  margin-left:10px;
 }
 
 #controls{
-margin-top:12px;
+  margin-top:12px;
 }
 
 #controls button{
-
-font-size:26px;
-padding:18px 40px;
-
-margin-right:12px;
-
-border:none;
-border-radius:10px;
-
-cursor:pointer;
-
+  font-size:26px;
+  padding:18px 40px;
+  margin-right:12px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
 }
 
 #startBtn{
-background:#00FF9C;
-color:#000;
+  background:#00FF9C;
+  color:#000;
 }
 
 #stopBtn{
-background:#ff4d4d;
-color:#fff;
+  background:#ff4d4d;
+  color:#fff;
 }
 
 #clearBtn{
-background:#555;
-color:#fff;
+  background:#555;
+  color:#fff;
 }
 
 #controls button:hover{
-opacity:0.85;
+  opacity:0.85;
 }
 
 #subtitleBox{
-
-position:absolute;
-bottom:0;
-width:100%;
-height:70%;
-
-overflow-y:auto;
-
-padding:40px;
-
-text-align:center;
-
-box-sizing:border-box;
-
+  position:absolute;
+  bottom:0;
+  width:100%;
+  height:70%;
+  overflow-y:auto;
+  padding:40px;
+  text-align:center;
+  box-sizing:border-box;
 }
 
 .subtitle{
-
-font-size:44px;
-color:#00FF9C;
-
-font-weight:bold;
-
-max-width:900px;
-
-margin:22px auto;
-
-line-height:1.55;
-
-word-break:keep-all;
-
-letter-spacing:0.5px;
-
-white-space:pre-line;
-
+  font-size:44px;
+  color:#00FF9C;
+  font-weight:bold;
+  max-width:900px;
+  margin:22px auto;
+  line-height:1.55;
+  word-break:keep-all;
+  letter-spacing:0.5px;
+  white-space:pre-line;
 }
 
+/* 모바일 자동 대응 */
+@media (max-width: 768px){
+  #header{
+    top:12px;
+    left:12px;
+    font-size:14px;
+  }
+
+  #version{
+    margin-left:6px;
+  }
+
+  #status{
+    display:block;
+    margin-left:0;
+    margin-top:6px;
+  }
+
+  #controls{
+    margin-top:10px;
+  }
+
+  #controls button{
+    font-size:18px;
+    padding:10px 18px;
+    margin-right:8px;
+    margin-bottom:6px;
+    border-radius:8px;
+  }
+
+  #subtitleBox{
+    height:65%;
+    padding:20px;
+  }
+
+  .subtitle{
+    font-size:28px;
+    max-width:92%;
+    margin:16px auto;
+    line-height:1.45;
+    letter-spacing:0;
+  }
+}
 </style>
 </head>
 
 <body>
 
 <div id="header">
+  🎤 AI 실시간 통역 <span id="version">ver11.4</span>
+  <span id="status">🟢 대기중 (F1 시작)</span>
 
-🎤 AI 실시간 통역 <span id="version">ver11.3</span>
-<span id="status">🟢 대기중 (F1 시작)</span>
-
-<div id="controls">
-
-<button id="startBtn" onclick="start()">시작</button>
-<button id="stopBtn" onclick="stop()">중지</button>
-<button id="clearBtn" onclick="clearSubtitle()">초기화</button>
-
-</div>
-
+  <div id="controls">
+    <button id="startBtn" onclick="start()">시작</button>
+    <button id="stopBtn" onclick="stop()">중지</button>
+    <button id="clearBtn" onclick="clearSubtitle()">초기화</button>
+  </div>
 </div>
 
 <div id="subtitleBox"></div>
 
 <script>
+let recognition;
+let running = false;
+let translating = false;
+let lastSentence = "";
+let queue = [];
 
-let recognition
-let running=false
-let translating=false
-let lastSentence=""
-let queue=[]
-
-/* 자막 최대 개수 */
-
-const MAX_SUBTITLES = 15
-
+const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const MAX_SUBTITLES = IS_MOBILE ? 8 : 15;
+const MIN_SENTENCE_LENGTH = IS_MOBILE ? 5 : 2;
 
 /* 감탄사 + 문장부호 제거 */
-
 function cleanText(text){
-
-return text
-
-.replace(/^(啊|嗯|哦|这个|那个|然后|所以|就是|음|아|어)+/g,"")
-.replace(/[.,!?。，！？…—-]/g,"")
-.replace(/\s+/g," ")
-.trim()
-
+  return text
+    .replace(/^(啊|嗯|哦|这个|那个|然后|所以|就是|음|아|어)+/g, "")
+    .replace(/[.,!?。，！？…—-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
-
 
 /* 긴 문장 줄 분리 */
-
 function splitSentence(text){
-
-if(text.length > 35){
-
-text=text.replace(/(그리고|하지만|그래서|또|또한)/g,"\n$1")
-
+  if(text.length > 35){
+    text = text.replace(/(그리고|하지만|그래서|또|또한)/g, "\n$1");
+  }
+  return text;
 }
-
-return text
-
-}
-
 
 function start(){
+  if(running) return;
 
-if(running) return
+  const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognitionClass){
+    alert("이 브라우저에서는 음성 인식을 지원하지 않아요.");
+    return;
+  }
 
-running=true
+  running = true;
+  document.getElementById("status").innerText = "🔴 통역중 (F1 멈춤)";
 
-document.getElementById("status").innerText="🔴 통역중 (F1 멈춤)"
+  recognition = new SpeechRecognitionClass();
+  recognition.lang = "zh-CN";
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
 
-recognition=new (window.SpeechRecognition||window.webkitSpeechRecognition)()
+  recognition.start();
 
-recognition.lang="zh-CN"
-recognition.continuous=true
-recognition.interimResults=false
-recognition.maxAlternatives=1
+  recognition.onresult = function(event){
+    let sentence = event.results[event.results.length - 1][0].transcript;
 
-recognition.start()
+    sentence = cleanText(sentence);
 
-recognition.onresult=function(event){
+    if(sentence.length < MIN_SENTENCE_LENGTH) return;
+    if(sentence === lastSentence) return;
 
-let sentence=event.results[event.results.length-1][0].transcript
+    lastSentence = sentence;
+    queue.push(sentence);
+    processQueue();
+  };
 
-sentence=cleanText(sentence)
+  recognition.onend = function(){
+    if(running){
+      try{
+        recognition.start();
+      }catch(e){}
+    }
+  };
 
-if(sentence.length < 2) return
-
-if(sentence===lastSentence) return
-
-lastSentence=sentence
-
-queue.push(sentence)
-
-processQueue()
-
+  recognition.onerror = function(){
+    // 상태 문구 추가 표시 안 함
+  };
 }
-
-
-recognition.onend=function(){
-
-if(running){
-
-try{
-
-recognition.start()
-
-}catch(e){}
-
-}
-
-}
-
-
-recognition.onerror=function(){
-
-/* 오류 메시지 표시 안함 */
-
-}
-
-}
-
 
 function stop(){
+  running = false;
 
-running=false
+  if(recognition){
+    try{
+      recognition.stop();
+    }catch(e){}
+  }
 
-if(recognition){
-
-try{
-
-recognition.stop()
-
-}catch(e){}
-
+  document.getElementById("status").innerText = "🟢 대기중 (F1 시작)";
 }
-
-document.getElementById("status").innerText="🟢 대기중 (F1 시작)"
-
-}
-
 
 /* 번역 큐 */
-
 async function processQueue(){
+  if(translating) return;
+  if(queue.length === 0) return;
 
-if(translating) return
-if(queue.length===0) return
+  translating = true;
+  const text = queue.shift();
 
-translating=true
+  try{
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=ko&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-const text=queue.shift()
+    let translated = data?.[0]?.map(item => item[0]).join("") || "";
+    translated = splitSentence(translated);
+    translated = cleanText(translated);
 
-try{
+    if(translated.length >= 2){
+      addSubtitle(translated);
+    }
+  }catch(e){
+    addSubtitle("번역 오류");
+  }
 
-const url=`https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=ko&dt=t&q=${encodeURIComponent(text)}`
-
-const res=await fetch(url)
-
-const data=await res.json()
-
-let translated=data?.[0]?.map(item=>item[0]).join("") || ""
-
-translated=splitSentence(translated)
-
-translated=cleanText(translated)
-
-if(translated.length>=2){
-
-addSubtitle(translated)
-
+  translating = false;
+  processQueue();
 }
 
-}catch(e){
-
-addSubtitle("번역 오류")
-
-}
-
-translating=false
-
-processQueue()
-
-}
-
-
-/* 자막 추가 + 15개 제한 */
-
+/* 자막 추가 + 최대 개수 제한 */
 function addSubtitle(text){
+  const box = document.getElementById("subtitleBox");
 
-const box=document.getElementById("subtitleBox")
+  const div = document.createElement("div");
+  div.className = "subtitle";
+  div.innerText = text;
 
-const div=document.createElement("div")
+  box.appendChild(div);
 
-div.className="subtitle"
+  while(box.children.length > MAX_SUBTITLES){
+    box.removeChild(box.firstChild);
+  }
 
-div.innerText=text
-
-box.appendChild(div)
-
-
-while(box.children.length > MAX_SUBTITLES){
-
-box.removeChild(box.firstChild)
-
+  box.scrollTop = box.scrollHeight;
 }
-
-box.scrollTop=box.scrollHeight
-
-}
-
 
 /* 자막 초기화 */
-
 function clearSubtitle(){
-
-document.getElementById("subtitleBox").innerHTML=""
-
+  document.getElementById("subtitleBox").innerHTML = "";
+  queue = [];
+  lastSentence = "";
 }
-
 
 /* F1 시작/중지 */
+document.addEventListener("keydown", function(e){
+  if(e.key === "F1"){
+    e.preventDefault();
 
-document.addEventListener("keydown",function(e){
-
-if(e.key==="F1"){
-
-e.preventDefault()
-
-if(running){
-
-stop()
-
-}else{
-
-start()
-
-}
-
-}
-
-})
-
+    if(running){
+      stop();
+    }else{
+      start();
+    }
+  }
+});
 </script>
 
 </body>
