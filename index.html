@@ -154,7 +154,7 @@ let lastSentence = "";
 let queue = [];
 
 const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-const MAX_SUBTITLES = IS_MOBILE ? 8 : 15;
+const MAX_SUBTITLES = IS_MOBILE ? 8 : 8;
 const MIN_SENTENCE_LENGTH = IS_MOBILE ? 5 : 2;
 
 /* 감탄사 + 문장부호 제거 */
@@ -300,3 +300,4 @@ document.addEventListener("keydown", function(e){
 
 </body>
 </html>
+
