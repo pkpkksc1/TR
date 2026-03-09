@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>AI 실시간 통역 ver11.1</title>
+<title>AI 실시간 통역 ver11.2</title>
 
 <style>
 body{
@@ -90,7 +90,7 @@ body{
 <body>
 
 <div id="header">
-  🎤 AI 실시간 통역 <span id="version">ver11</span>
+  🎤 AI 실시간 통역 <span id="version">ver11.2</span>
   <span id="status">🟢 대기중 (F1 시작)</span>
 
   <div id="controls">
@@ -162,7 +162,7 @@ function start(){
   };
 
   recognition.onerror = function(){
-    document.getElementById("status").innerText = "🟡 오류 발생 다시 시도중";
+    // 오류 문구 표시 안 함
   };
 }
 
